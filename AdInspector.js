@@ -117,7 +117,7 @@ class AdInspector {
 
     getPrebidData(adUnitCode) {
         const pbjs = window.top.pbjs;
-        if (!pbjs) return { bidder: "Kein Prebid", cpm: "—" };
+        if (!pbjs) return { bidder: "Kein Prebid", cpm: "—", currency: "EUR" };
 
         let winner = pbjs.getHighestCpmBids(adUnitCode)[0];
 
@@ -125,7 +125,9 @@ class AdInspector {
             const responses = pbjs.getBidResponsesForAdUnitCode(adUnitCode);
             if (responses?.bids?.length) {
                 winner = responses.bids.reduce((best, curr) =>
+                    // WICHTIG
                     curr.cpm > (best.cpm || 0) ? curr : best
+
                 );
             }
         }
@@ -133,10 +135,11 @@ class AdInspector {
         if (winner && winner.cpm) {
             return {
                 bidder: winner.bidder || winner.bidderCode || "Unbekannt",
-                cpm: winner.cpm.toFixed(2)
+                cpm: winner.cpm.toFixed(2),
+                currency: winner.currency || 'EUR'
             };
         }
-        return { bidder: "Kein Gebot", cpm: "—" };
+        return { bidder: "Kein Gebot", cpm: "—", currency: "EUR" };
     }
 
     getSlotStatus(slot) {
@@ -200,6 +203,7 @@ class AdInspector {
                     sizes: this.formatSizes(slot.getSizes()),
                     bidder: prebid.bidder,
                     cpm: prebid.cpm,
+                    currency: prebid.currency  || 'EUR',
                     status: this.getSlotStatus(slot),
                     targeting: this.getTargetingInfo(slot),
                     refreshCount: refreshInfo.refreshCount,
@@ -314,7 +318,7 @@ const AdInspectorUI = {
                     <strong style="color: darkblue">SlotName: ${slot.id}</strong><br>
                     <small style="color: darkblue" class="ad-meta">Path: ${slot.path}</small><br>
                     <strong style="color:${color}">Bidder: ${slot.bidder}</strong><br>
-                    <strong style="color:red;padding:8px 0;">CPM: ${slot.cpm}</strong><br>
+                    <strong style="color:red;padding:8px 0;">CPM: ${slot.cpm} ${slot.currency}</strong><br>
                     <small class="ad-meta">Sizes: ${slot.sizes}</small><br>
                     <small class="ad-meta">Refreshes: ${slot.refreshCount}× | Letzter: ${slot.lastRefresh}</small><br>
                     <small class="ad-meta" style="color:#6B0000">Targeting: ${slot.targeting}</small><br>
@@ -400,6 +404,7 @@ const AdInspectorUI = {
                     element.scrollIntoView({ behavior: "smooth", block: "center" });
                     element.style.transition = "all 0.4s";
                     element.style.boxShadow = "0 0 0 25px rgba(255, 50, 50, 0.7)";
+                    // element.style.backdropFilter = "blur(42px) saturate(220%);";
                     setTimeout(() => element.style.boxShadow = "none", 2500);
                 }
             });
@@ -444,7 +449,7 @@ const AdInspectorUI = {
                 font-weight: bold;
                 box-shadow: 0 2px 8px rgba(0,0,0,0.5);
             `;
-            label.textContent = `${slot.bidder} • ${slot.cpm}`;
+            label.textContent = `${slot.bidder} • ${slot.cpm} ${slot.currency}`;
 
             overlay.appendChild(label);
             document.body.appendChild(overlay);
@@ -488,4 +493,5 @@ const AdInspectorUI = {
     }
 };
 
+// Start
 new AdInspector();
